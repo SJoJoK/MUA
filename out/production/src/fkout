@@ -1,0 +1,6 @@
+java.util.NoSuchElementException: No line found
+	at java.base/java.util.Scanner.nextLine(Scanner.java:1651)
+	at mua.Interpreter_Mua.begin(Interpreter_Mua.java:27)
+	at mua.Main.main(Main.java:6)
+	at Test.main(Test.java:88)
+0
