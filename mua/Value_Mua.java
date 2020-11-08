@@ -29,5 +29,6 @@ public class Value_Mua {
     {
         return new Word_Mua(this);
     }
+    public List_Mua toList() { return new List_Mua(this); }
 
 }

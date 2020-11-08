@@ -16,5 +16,11 @@ public class Bool_Mua extends Value_Mua{
         if(v.literal.equals("true")) bool_value=true;
         else bool_value=false;
     }
+    Bool_Mua(Boolean v)
+    {
+        super(v.toString());
+        Type_Mua=TYPE_MUA.BOOL;
+        bool_value=v;
+    }
 
 }

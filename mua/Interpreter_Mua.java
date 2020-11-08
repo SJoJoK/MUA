@@ -1,10 +1,7 @@
 package mua;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.*;
 
 public class Interpreter_Mua {
@@ -26,7 +23,7 @@ public class Interpreter_Mua {
             inst = scan.nextLine();
             if(inst.equals("")) break;
             // 改成循环
-            String[] nodes = inst.split(" ");
+            String[] nodes = inst.replace("("," ( ").replace(")"," ) ").split(" ");
             ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
             interpret(nodes_list);
         }
@@ -66,11 +63,11 @@ public class Interpreter_Mua {
             return new Bool_Mua(temp);
         }
         //list
-        else if(nodes.get(0).matches("(^\\[\\]$)"))
+        else if(nodes.get(0).charAt(0)=='[')
         {
             String temp = nodes.get(0);
-            nodes.remove(0);
-            return new List_Mua('['+temp+']',temp);
+            Value_Mua l = build_list(nodes);
+            return l;
         }
         else
         {
@@ -138,17 +135,64 @@ public class Interpreter_Mua {
                     Value_Mua b =interpret(nodes);
                     return mod_mua(a.toNumber(),b.toNumber());
                 }
+                case "erase":
+                {
+                    nodes.remove(0);
+                    Value_Mua value =interpret(nodes);
+                    Word_Mua name = value.toWord();
+                    return erase_mua(name);
+                }
+                case "isname":
+                {
+                    nodes.remove(0);
+                    Value_Mua value =interpret(nodes);
+                    Word_Mua name = value.toWord();
+                    return isname_mua(name);
+                }
+                case "run":
+                {
+                    nodes.remove(0);
+                    Value_Mua value =interpret(nodes);
+                    List_Mua list = value.toList();
+                    return run_mua(list);
+                }
                 default:
                 {
                     //A word
                     String temp = nodes.get(0);
                     nodes.remove(0);
                     String l = '\"' + temp;
-                    String v = temp;
-                    return new Word_Mua(l,v);
+                    return new Word_Mua(l, temp);
                 }
             }
         }
+    }
+    Value_Mua build_list(ArrayList<String> nodes)
+    {
+        StringBuilder literal = new StringBuilder("");
+        Iterator<String> iter = nodes.iterator();
+        while(iter.hasNext())
+        {
+            String str=iter.next();
+            if("[".equals(str))
+            {
+                literal.append("[");
+                iter.remove();
+            }
+            else if("]".equals(str))
+            {
+                literal.deleteCharAt(literal.length()-1);//移除空格
+                literal.append("]");
+                iter.remove();
+                break;
+            }
+            else
+            {
+                literal.append(str).append(" ");
+                iter.remove();
+            }
+        }
+        return new List_Mua(literal);
     }
     Value_Mua make_mua(Word_Mua name, Value_Mua value)
     {
@@ -205,6 +249,28 @@ public class Interpreter_Mua {
             v.Type_Mua= Value_Mua.TYPE_MUA.WORD;
         }
         return v;
+    }
+    Value_Mua erase_mua(Word_Mua word_name)
+    {
+        String name = word_name.word_value.toString();
+        if(Word_Map.containsKey(name)) return Word_Map.remove(name);
+        else if(Number_Map.containsKey(name)) return Number_Map.remove(name);
+        else if(Bool_Map.containsKey(name)) return Bool_Map.remove(name);
+        else if(List_Map.containsKey(name)) return List_Map.remove(name);
+        else return new Value_Mua();
+    }
+    Bool_Mua isname_mua(Word_Mua word_name)
+    {
+        String name = word_name.word_value.toString();
+        if(Word_Map.containsKey(name)) return new Bool_Mua(true);
+        else if(Number_Map.containsKey(name)) return new Bool_Mua(true);
+        else if(Bool_Map.containsKey(name)) return new Bool_Mua(true);
+        else if(List_Map.containsKey(name)) return new Bool_Mua(true);
+        else return new Bool_Mua(false);
+    }
+    Value_Mua run_mua(List_Mua list)
+    {
+        return interpret(list.list_value);
     }
     Number_Mua add_mua(Number_Mua a, Number_Mua b)
     {

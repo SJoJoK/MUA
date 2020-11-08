@@ -10,18 +10,32 @@ public class List_Mua extends Value_Mua {
         Type_Mua=TYPE_MUA.LIST;
         list_value = new ArrayList<String>();
     }
+    List_Mua(boolean x)
+    {
+        super("[]");
+        Type_Mua=TYPE_MUA.LIST;
+        list_value = new ArrayList<String>();
+    }
     List_Mua(ArrayList<String> value)
     {
-        super('['+value.toString()+']');
+        super('['+value.toString().trim()+']');
         Type_Mua=TYPE_MUA.LIST;
         list_value = value;
     }
-    List_Mua(StringBuilder value)
+    List_Mua(String value)
     {
-        super('['+value.toString()+']');
+        super('['+value.trim()+']');
         Type_Mua=TYPE_MUA.LIST;
-        value = new StringBuilder(value.toString().trim());
-        String[] temp = value.toString().split(" ");
+        String[] temp = value.trim().split(" ");
+        list_value = new ArrayList<String>(Arrays.asList(temp));
+    }
+    List_Mua(StringBuilder literal)
+    {
+        super(literal.toString());
+        Type_Mua=TYPE_MUA.LIST;
+        literal.deleteCharAt(0);
+        literal.deleteCharAt(literal.length() - 1);
+        String[] temp = literal.toString().trim().split(" ");
         list_value = new ArrayList<String>(Arrays.asList(temp));
     }
     List_Mua(String l, String value)
@@ -29,7 +43,7 @@ public class List_Mua extends Value_Mua {
         super(l);
         Type_Mua=TYPE_MUA.LIST;
         value = value.trim();
-        String[] temp = value.toString().split(" ");
+        String[] temp = value.split(" ");
         list_value = new ArrayList<String>(Arrays.asList(temp));
     }
     List_Mua(Value_Mua v)
@@ -40,6 +54,12 @@ public class List_Mua extends Value_Mua {
         value=value.substring(1,value.length()-2);
         String[] temp = value.split(" ");
         list_value = new ArrayList<String>(Arrays.asList(temp));
+    }
+    void append(String e)
+    {
+        literal = literal.substring(0,literal.length()-2);
+        literal = literal + " " + e + "]";
+        list_value.add(e);
     }
 
 
