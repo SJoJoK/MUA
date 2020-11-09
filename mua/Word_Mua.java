@@ -8,6 +8,12 @@ public class Word_Mua extends Value_Mua {
         Type_Mua=TYPE_MUA.WORD;
         word_value = new StringBuilder();
     }
+    Word_Mua(String l)
+    {
+        super(l);
+        Type_Mua=TYPE_MUA.WORD;
+        word_value = new StringBuilder(l.substring(1));
+    }
     Word_Mua(String l, String value)
     {
         super(l);
