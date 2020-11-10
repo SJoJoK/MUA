@@ -1,9 +1,6 @@
-print: PASS
-make: PASS
-thing: PASS
-elementary calculation: PASS
-division: PASS
-mod: PASS
-read: PASS
-print returns: PASS
-10
+ not gt: PASS
+ isname: PASS
+ read: PASS
+ eq: PASS
+ earse: PASS
+5

@@ -673,6 +673,19 @@ public class Interpreter_Mua {
             if(left==right) break;
         }
         i = 0;
+        for(i=0;i<length - 1;i++)
+        {
+            if(nodes.get(i+1).equals("-"))
+            {
+                if((!nodes.get(i).equals("(")) || !nodes.get(i).matches("[0-9]"))
+                {
+                    nodes.remove(i+1);
+                    nodes.set(i+1,"-" + nodes.get(i+1));
+                    length--;
+                }
+            }
+        }
+        i=0;
         while(i<length)
         {
             str=nodes.get(0);
