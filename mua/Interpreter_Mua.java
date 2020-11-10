@@ -24,7 +24,7 @@ public class Interpreter_Mua {
         while(scan.hasNextLine())
         {
             inst = scan.nextLine();
-            if(inst.equals("")) break;
+            //if(inst.equals("")) break;
             // 改成循环
             String[] nodes = inst.replace("("," ( ").replace(")"," ) ")
                                  .replace("["," [ ").replace("]"," ] ")
@@ -37,6 +37,7 @@ public class Interpreter_Mua {
     }
     Value_Mua interpret(List<String> nodes)
     {
+        if(nodes.get(0).equals("")) return new Value_Mua("");
         if(nodes.isEmpty()) return new Value_Mua("");
         //thing
         if(nodes.get(0).charAt(0)==':')
@@ -677,7 +678,7 @@ public class Interpreter_Mua {
         {
             if(nodes.get(i+1).equals("-"))
             {
-                if((!nodes.get(i).equals("(")) || !nodes.get(i).matches("[0-9]"))
+                if((!nodes.get(i).equals(")")) && !nodes.get(i).matches(regex_num))
                 {
                     nodes.remove(i+1);
                     nodes.set(i+1,"-" + nodes.get(i+1));
