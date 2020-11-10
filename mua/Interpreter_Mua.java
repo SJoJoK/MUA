@@ -1,11 +1,13 @@
 package mua;
 
-
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.*;
 
 public class Interpreter_Mua {
+    String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
+    String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
+
     HashMap<String,Bool_Mua> Bool_Map;
     HashMap<String,List_Mua> List_Map;
     HashMap<String,Number_Mua> Number_Map;
@@ -33,7 +35,7 @@ public class Interpreter_Mua {
             interpret(nodes_list);
         }
     }
-    Value_Mua interpret(ArrayList<String> nodes)
+    Value_Mua interpret(List<String> nodes)
     {
         if(nodes.isEmpty()) return new Value_Mua("");
         //thing
@@ -270,7 +272,7 @@ public class Interpreter_Mua {
             }
         }
     }
-    Value_Mua interpret(ArrayList<String> nodes, ArrayList<Value_Mua> ress, int k)
+    Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k)
     {
         if(nodes.isEmpty()) return new Value_Mua();
         //thing
@@ -564,7 +566,7 @@ public class Interpreter_Mua {
             }
         }
     }
-    Value_Mua build_list(ArrayList<String> nodes)
+    Value_Mua build_list(List<String> nodes)
     {
         StringBuilder literal = new StringBuilder("");
         Iterator<String> iter = nodes.iterator();
@@ -591,16 +593,77 @@ public class Interpreter_Mua {
         }
         return new List_Mua(literal);
     }
-    Number_Mua infix(ArrayList<String> nodes)
+    Number_Mua infix(List<String> nodes)
     {
         Stack<Number_Mua> num_stack = new Stack<Number_Mua>();
         Stack<infix_op> op_stack = new Stack<infix_op>();
-        Iterator<String> iter = nodes.iterator();
         int left=0;
         int right=0;
         int length=0;
         String str = "";
-        //计算长度
+        int i = 0;
+        //替换前缀
+        while(true)
+        {
+            if(i>=nodes.size()) break;
+            str = nodes.get(i);
+            if(str.charAt(0)==':')
+            {
+                nodes.set(i, nodes.get(i).substring(1));
+                Value_Mua value =interpret(nodes.subList(i, nodes.size()));
+                Word_Mua name = value.toWord();
+                nodes.add(i, thing_mua(name).literal);
+                i++;
+                continue;
+            }
+            switch (str)
+            {
+                case "add":
+                {
+                    nodes.remove(i);
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    nodes.add(i,add_mua(a.toNumber(),b.toNumber()).literal);
+                    break;
+                }
+                case "sub":
+                {
+                    nodes.remove(i);
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    nodes.add(i,sub_mua(a.toNumber(),b.toNumber()).literal);
+                    break;
+                }
+                case "mul":
+                {
+                    nodes.remove(i);
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    nodes.add(i,mul_mua(a.toNumber(),b.toNumber()).literal);
+                    break;
+                }
+                case "div":
+                {
+                    nodes.remove(i);
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    nodes.add(i,div_mua(a.toNumber(),b.toNumber()).literal);
+                    break;
+                }
+                case "mod":
+                {
+                    nodes.remove(i);
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    nodes.add(i,mod_mua(a.toNumber(),b.toNumber()).literal);
+                    break;
+                }
+                default:;
+            }
+            i++;
+        }
+        Iterator<String> iter = nodes.iterator();
+        //计算中缀长度
         while(iter.hasNext())
         {
             length++;
@@ -609,7 +672,7 @@ public class Interpreter_Mua {
             if(str.equals(")")) right++;
             if(left==right) break;
         }
-        int i = 0;
+        i = 0;
         while(i<length)
         {
             str=nodes.get(0);
@@ -650,7 +713,7 @@ public class Interpreter_Mua {
                 nodes.remove(0);
             }
             //PREFIX OP
-            else
+            /*else
             {
                 switch (str)
                 {
@@ -700,7 +763,7 @@ public class Interpreter_Mua {
                         break;
                     }
                 }
-            }
+            }*/
         }
         return num_stack.pop();
     }
