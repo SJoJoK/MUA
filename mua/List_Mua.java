@@ -51,7 +51,7 @@ public class List_Mua extends Value_Mua {
         super(v.literal);
         Type_Mua=TYPE_MUA.LIST;
         String value = v.literal.trim();
-        value=value.substring(1,value.length()-2);
+        value=value.substring(1,value.length()-1);
         String[] temp = value.split(" ");
         list_value = new ArrayList<String>(Arrays.asList(temp));
     }
