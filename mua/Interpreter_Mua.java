@@ -1,6 +1,7 @@
 package mua;
 
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.*;
 
@@ -23,7 +24,11 @@ public class Interpreter_Mua {
             inst = scan.nextLine();
             if(inst.equals("")) break;
             // 改成循环
-            String[] nodes = inst.replace("("," ( ").replace(")"," ) ").split(" ");
+            String[] nodes = inst.replace("("," ( ").replace(")"," ) ")
+                                 .replace("["," [ ").replace("]"," ] ")
+                                 .replace("+", " + ").replace("-", " - ")
+                                 .replace("*", " * ").replace("/", " / ")
+                                 .replace("%", " % ").trim().split("\\s+");
             ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
             interpret(nodes_list);
         }
@@ -66,8 +71,13 @@ public class Interpreter_Mua {
         //list
         else if(nodes.get(0).charAt(0)=='[')
         {
-            String temp = nodes.get(0);
             Value_Mua l = build_list(nodes);
+            return l;
+        }
+        //Infix
+        else if(nodes.get(0).charAt(0)=='(')
+        {
+            Value_Mua l = infix(nodes);
             return l;
         }
         else
@@ -581,6 +591,114 @@ public class Interpreter_Mua {
         }
         return new List_Mua(literal);
     }
+    Number_Mua infix(ArrayList<String> nodes)
+    {
+        Stack<Number_Mua> num_stack = new Stack<Number_Mua>();
+        Stack<infix_op> op_stack = new Stack<infix_op>();
+        Iterator<String> iter = nodes.iterator();
+        String str = "";
+        if(iter.hasNext())
+        {
+            str = iter.next();
+        }
+        while(iter.hasNext())
+        {
+            //OPERATER
+            if(str.matches("\\+|-|\\*|/|%|\\(|\\)"))
+            {
+                infix_op temp = new infix_op(str);
+                if(op_stack.isEmpty())
+                {
+                    op_stack.push(temp);
+                    iter.remove();
+                    str = iter.next();
+                }
+                else if(op_stack.peek().in_prior<temp.out_prior)
+                {
+                    op_stack.push(temp);
+                    iter.remove();
+                    str = iter.next();
+                }
+                else if(op_stack.peek().in_prior==temp.out_prior)
+                {
+                    op_stack.pop();
+                    iter.remove();
+                    str = iter.next();
+                }
+                else
+                {
+                    while((!op_stack.isEmpty())&&op_stack.peek().in_prior>temp.out_prior)
+                    {
+                        Number_Mua b = num_stack.pop();
+                        Number_Mua a = num_stack.pop();
+                        num_stack.push(op_stack.pop().exe(a,b));
+                    }
+                }
+            }
+            //NUMBER
+            else if(str.matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
+            {
+                num_stack.push(new Number_Mua(str));
+                iter.remove();
+                str = iter.next();
+            }
+            //PREFIX OP
+            else
+            {
+                switch (str)
+                {
+                    case "add":
+                    {
+                        iter.remove();
+                        str= iter.next();
+                        Value_Mua a =interpret(nodes);
+                        Value_Mua b =interpret(nodes);
+                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
+                    }
+                    case "sub":
+                    {
+                        iter.remove();
+                        str= iter.next();
+                        Value_Mua a =interpret(nodes);
+                        Value_Mua b =interpret(nodes);
+                        num_stack.push(sub_mua(a.toNumber(),b.toNumber()));
+                    }
+                    case "mul":
+                    {
+                        iter.remove();
+                        str= iter.next();
+                        Value_Mua a =interpret(nodes);
+                        Value_Mua b =interpret(nodes);
+                        num_stack.push(mul_mua(a.toNumber(),b.toNumber()));
+                    }
+                    case "div":
+                    {
+                        iter.remove();
+                        str= iter.next();
+                        Value_Mua a =interpret(nodes);
+                        Value_Mua b =interpret(nodes);
+                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
+                    }
+                    case "mod":
+                    {
+                        iter.remove();
+                        str= iter.next();
+                        Value_Mua a =interpret(nodes);
+                        Value_Mua b =interpret(nodes);
+                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
+                    }
+                }
+            }
+        }
+       // THE LAST ")"
+        while((op_stack.peek().op!= infix_op.INFIX_OP.LEFT))
+        {
+            Number_Mua b = num_stack.pop();
+            Number_Mua a = num_stack.pop();
+            num_stack.push(op_stack.pop().exe(a,b));
+        }
+        return num_stack.pop();
+    }
     Value_Mua make_mua(Word_Mua name, Value_Mua value)
     {
         switch(value.Type_Mua)
@@ -740,5 +858,4 @@ public class Interpreter_Mua {
     {
         return v.isempty();
     }
-
 }
