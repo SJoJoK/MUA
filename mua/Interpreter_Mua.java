@@ -618,6 +618,9 @@ public class Interpreter_Mua {
     }
     Bool_Mua eq_mua(Value_Mua a, Value_Mua b)
     {
+        if(a.isnumber().bool_value&&b.isnumber().bool_value)
+            return new Bool_Mua(a.toNumber().number_value==b.toNumber().number_value);
+        else
         return new Bool_Mua(a.literal.equals(b.literal));
     }
     Bool_Mua lt_mua(Value_Mua a, Value_Mua b)
