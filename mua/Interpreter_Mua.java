@@ -425,6 +425,7 @@ public class Interpreter_Mua {
     {
         Stack<Number_Mua> num_stack = new Stack<Number_Mua>();
         Stack<infix_op> op_stack = new Stack<infix_op>();
+        Value_Mua tmp = new Value_Mua();
         int left=0;
         int right=0;
         int length=0;
@@ -441,10 +442,23 @@ public class Interpreter_Mua {
             if(left==right) break;
         }
         //替换前缀
-        while(i<length)
+        while(i<length&&i<nodes.size())
         {
             str = nodes.get(i);
-            if(str.charAt(0)==':')
+            if(str.matches(regex_num)||str.matches(regex_ops))
+            {
+                i++;
+                continue;
+            }
+            //前缀
+            else
+            {
+                tmp = interpret(nodes.subList(i,nodes.size()),new ArrayList<Value_Mua>(),0,env_name);
+                nodes.add(i,tmp.literal);
+                i++;
+                continue;
+            }
+            /*if(str.charAt(0)==':')
             {
                 nodes.set(i, nodes.get(i).substring(1));
                 Value_Mua value =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
@@ -496,8 +510,7 @@ public class Interpreter_Mua {
                     break;
                 }
                 default:;
-            }
-            i++;
+            }*/
         }
         Iterator<String> iter = nodes.iterator();
         length = 0;
