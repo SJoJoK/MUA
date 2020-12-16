@@ -18,6 +18,7 @@ public class Interpreter_Mua {
         StringBuilder program = new StringBuilder();
         while(scan.hasNextLine())
         {
+            program.append(" ");
             program.append(scan.nextLine());
         }
         String[] nodes = program.toString().replace("("," ( ").replace(")"," ) ")
@@ -27,7 +28,10 @@ public class Interpreter_Mua {
                              .replace("%", " % ").trim().split("\\s+");
         ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
         ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
-        interpret(nodes_list, ress, 0, "global");
+        while(nodes_list.size()>0)
+        {
+            interpret(nodes_list, ress, 0, "global");
+        }
     }
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
     {
@@ -87,12 +91,9 @@ public class Interpreter_Mua {
                 case "make" :
                 {
                     ress.add(new Value_Mua());
-                    String l = nodes.get(1);
-                    String v = nodes.get(1).substring(1);
-                    nodes.remove(0);
-                    nodes.remove(0);
-                    Word_Mua name = new Word_Mua(l,v);
-                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
+                    nodes.remove(0);//删除make
+                    Word_Mua name = interpret(nodes,ress,k+1,env_name).toWord();
+                    Value_Mua value =interpret(nodes, ress, k+2, env_name);
                     Value_Mua res = make_mua(name, value,env_name);
                     ress.set(k,res);
                     return res;
@@ -343,11 +344,25 @@ public class Interpreter_Mua {
                     nodes.remove(0);
                     if(Env.get(env_name).containsKey(temp))
                     {
-                        return Func_Mua(nodes, env_name,temp);
+                        if(!Env.get(env_name).get(temp).islist().bool_value)
+                        {
+                            //如果不是表，则是字
+                            String l = '\"' + temp;
+                            return new Word_Mua(l, temp);
+                        }
+                        else //如果是表，则可能是函数..
+                            return Func_Mua(nodes,env_name,env_name, temp);
                     }
                     else if(Variable_Map_Global.containsKey(temp))
                     {
-                        return Func_Mua(nodes, "global",temp);
+                        if(!Variable_Map_Global.get(temp).islist().bool_value)
+                        {
+                            //如果不是表，则是字
+                            String l = '\"' + temp;
+                            return new Word_Mua(l, temp);
+                        }
+                        else  //如果是表，则可能是函数..
+                            return Func_Mua(nodes,env_name,"global",temp);
                     }
                     else
                     {
@@ -375,6 +390,7 @@ public class Interpreter_Mua {
             else if("]".equals(str))
             {
                 lb--;
+                if(literal.charAt(literal.length()-1)==' ')
                 literal.deleteCharAt(literal.length()-1);//移除空格
                 if(lb==0)
                 {
@@ -405,10 +421,19 @@ public class Interpreter_Mua {
         int length=0;
         String str = "";
         int i = 0;
-        //替换前缀
-        while(true)
+        Iterator<String> iter_s = nodes.iterator();
+        //计算中缀长度
+        while(iter_s.hasNext())
         {
-            if(i>=nodes.size()) break;
+            length++;
+            str = iter_s.next();
+            if(str.equals("(")) left++;
+            if(str.equals(")")) right++;
+            if(left==right) break;
+        }
+        //替换前缀
+        while(i<length)
+        {
             str = nodes.get(i);
             if(str.charAt(0)==':')
             {
@@ -466,6 +491,7 @@ public class Interpreter_Mua {
             i++;
         }
         Iterator<String> iter = nodes.iterator();
+        length = 0;
         //计算中缀长度
         while(iter.hasNext())
         {
@@ -689,12 +715,13 @@ public class Interpreter_Mua {
     {
         return v.isempty();
     }
-    Value_Mua Func_Mua(List<String> father_nodes, String father_env_name, String func_name)
+    Value_Mua Func_Mua(List<String> father_nodes, String father_env_name, String func_from_name,String func_name)
     {
         HashMap<String,Value_Mua> father_env = Env.get(father_env_name);
+        HashMap<String,Value_Mua> func_from_env = Env.get(func_from_name);
         HashMap<String,Value_Mua> this_env = new HashMap<>();
-        List_Mua func = new List_Mua(father_env.get(func_name));//获得函数定义，新对象，以防函数只能用一次
-        String this_env_name = func_name;
+        List_Mua func = new List_Mua(func_from_env.get(func_name));//获得函数定义，新对象，以防函数只能用一次
+        String this_env_name = father_env_name + "_" + func_name;
 
         Value_Mua res = new Value_Mua();
 
@@ -706,6 +733,7 @@ public class Interpreter_Mua {
         ArrayList<Value_Mua> argu_value = new ArrayList<>();
         for(int i=0;i<argc;i++)
         {
+            argu_value.add(new Value_Mua());
             argu_value.set(i, interpret(father_nodes, new ArrayList<Value_Mua>(), 0, father_env_name));
         }
         //Bonding
@@ -714,6 +742,7 @@ public class Interpreter_Mua {
             this_env.put(func_argu_name.list_value.get(i),argu_value.get(i));
         }
         Env.put(this_env_name, this_env);
+        while(func_code.list_value.size()>0)
         res = interpret(func_code.list_value,new ArrayList<Value_Mua>(),0,this_env_name);
         return res;
     }
