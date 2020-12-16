@@ -89,7 +89,7 @@ public class Interpreter_Mua {
                     ress.add(new Value_Mua());
                     nodes.remove(0);//删除make
                     Word_Mua name = interpret(nodes,ress,k+1,env_name).toWord();
-                    Value_Mua value =interpret(nodes, ress, k+2, env_name);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = make_mua(name, value,env_name);
                     ress.set(k,res);
                     return res;
