@@ -6,14 +6,14 @@ public class Interpreter_Mua {
     String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
     String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
 
-    HashMap<String,Value_Mua> Variable_Map;
+    HashMap<String,Value_Mua> Variable_Map_Global;
     HashMap<String,HashMap<String, Value_Mua>> Env;
     Scanner scan;
     public void begin()
     {
-        Variable_Map = new HashMap<>();
+        Variable_Map_Global = new HashMap<>();
         Env = new HashMap<>();
-        Env.put("global",Variable_Map);
+        Env.put("global",Variable_Map_Global);
         scan = new Scanner(System.in);
         String inst = new String();
         while(scan.hasNextLine())
@@ -181,7 +181,7 @@ public class Interpreter_Mua {
                     nodes.remove(0);
                     Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
-                    Value_Mua res = erase_mua(name);
+                    Value_Mua res = erase_mua(name,env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -325,9 +325,13 @@ public class Interpreter_Mua {
 
                     String temp = nodes.get(0);
                     nodes.remove(0);
-                    if(Variable_Map.containsKey(temp))
+                    if(Env.get(env_name).containsKey(temp))
                     {
-                        return Func_Mua(temp);
+                        return Func_Mua(nodes, env_name,temp);
+                    }
+                    else if(Variable_Map_Global.containsKey(temp))
+                    {
+                        return Func_Mua(nodes, "global",temp);
                     }
                     else
                     {
@@ -521,9 +525,8 @@ public class Interpreter_Mua {
     {
         String name = word_name.word_value.toString();
         HashMap<String,Value_Mua> local_env = Env.get(env_name);
-        HashMap<String,Value_Mua> global_env = Env.get("global");
-        if(local_env.containsKey(name)) return Variable_Map.get(name);
-        else if(global_env.containsKey(name)) return Variable_Map.get(name);
+        if(local_env.containsKey(name)) return local_env.get(name);
+        else if(Variable_Map_Global.containsKey(name)) return Variable_Map_Global.get(name);
         else return new Value_Mua();
     }
     Value_Mua print_mua(Value_Mua value)
@@ -561,10 +564,12 @@ public class Interpreter_Mua {
         }
         return v;
     }
-    Value_Mua erase_mua(Word_Mua word_name)
+    Value_Mua erase_mua(Word_Mua word_name, String env_name)
     {
         String name = word_name.word_value.toString();
-        if(Variable_Map.containsKey(name)) return Variable_Map.remove(name);
+        HashMap<String,Value_Mua> local_env = Env.get(env_name);
+        if(local_env.containsKey(name)) return local_env.remove(name);
+        else if(Variable_Map_Global.containsKey(name)) return Variable_Map_Global.remove(name);
         else return new Value_Mua();
     }
     Bool_Mua isname_mua(Word_Mua word_name, String env_name)
@@ -668,15 +673,32 @@ public class Interpreter_Mua {
     {
         return v.isempty();
     }
-    Value_Mua Func_Mua(String func_name)
+    Value_Mua Func_Mua(List<String> father_nodes, String father_env_name, String func_name)
     {
-        List_Mua func = new List_Mua(Variable_Map.get(func_name));
-        String env_name = func_name;
+        HashMap<String,Value_Mua> father_env = Env.get(father_env_name);
+        HashMap<String,Value_Mua> this_env = new HashMap<>();
+        List_Mua func = new List_Mua(father_env.get(func_name));//获得函数定义，新对象，以防函数只能用一次
+        String this_env_name = func_name;
+
         Value_Mua res = new Value_Mua();
-        //新的对象，以防函数只能用一次
+
         List temp_nodes = func.list_value;
-        List_Mua func_argu = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
+        List_Mua func_argu_name = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
         List_Mua func_code = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
+        int argc = func_argu_name.list_value.size();
+        //传入参数
+        ArrayList<Value_Mua> argu_value = new ArrayList<>();
+        for(int i=0;i<argc;i++)
+        {
+            argu_value.set(i, interpret(father_nodes, new ArrayList<Value_Mua>(), 0, father_env_name));
+        }
+        //Bonding
+        for(int i=0;i<argc;i++)
+        {
+            this_env.put(func_argu_name.list_value.get(i),argu_value.get(i));
+        }
+        Env.put(this_env_name, this_env);
+        res = interpret(func_code.list_value,new ArrayList<Value_Mua>(),0,this_env_name);
         return res;
     }
 }
