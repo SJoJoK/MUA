@@ -705,6 +705,7 @@ public class Interpreter_Mua {
         Env.put(this_env_name, this_env);
         while(func_code.list_value.size()>0)
         res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
+        Env.remove(this_env_name);
         return res;
     }
     Value_Mua export_mua(Word_Mua name, String env_name)
