@@ -27,255 +27,11 @@ public class Interpreter_Mua {
                                  .replace("*", " * ").replace("/", " / ")
                                  .replace("%", " % ").trim().split("\\s+");
             ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
-            interpret(nodes_list, "global");
+            ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
+            interpret(nodes_list, ress, 0, "global");
         }
     }
-    Value_Mua interpret(List<String> nodes)
-    {
-        if(nodes.get(0).equals("")) return new Value_Mua("");
-        if(nodes.isEmpty()) return new Value_Mua("");
-        //thing
-        if(nodes.get(0).charAt(0)==':')
-        {
-            nodes.set(0, nodes.get(0).substring(1));
-            Value_Mua value =interpret(nodes);
-            Word_Mua name = value.toWord();
-            return thing_mua(name);
-        }
-        //number
-        else if(nodes.get(0).matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
-        {
-            String temp = nodes.get(0);
-            nodes.remove(0);
-            return new Number_Mua(temp);
-        }
-        //word
-        else if(nodes.get(0).charAt(0)=='\"')
-        {
-            String temp = nodes.get(0);
-            nodes.remove(0);
-            temp=temp.substring(1);
-            String l = '\"' + temp;
-            String v = temp;
-            return new Word_Mua(l,v);
-        }
-        //boolean
-        else if(nodes.get(0).equals("true")||nodes.get(0).equals("false"))
-        {
-            String temp = nodes.get(0);
-            nodes.remove(0);
-            return new Bool_Mua(temp);
-        }
-        //list
-        else if(nodes.get(0).charAt(0)=='[')
-        {
-            Value_Mua l = build_list(nodes);
-            return l;
-        }
-        //Infix
-        else if(nodes.get(0).charAt(0)=='(')
-        {
-            Value_Mua l = infix(nodes);
-            return l;
-        }
-        else
-        {
-            switch (nodes.get(0))
-            {
-                case "make" :
-                {
-                    String l = nodes.get(1);
-                    String v = nodes.get(1).substring(1);
-                    nodes.remove(0);
-                    nodes.remove(0);
-                    Word_Mua name = new Word_Mua(l,v);
-                    Value_Mua value =interpret(nodes);
-                    return make_mua(name, value);
-                }
-                case "thing":
-                {
-                    nodes.remove(0);
-                    Value_Mua value =interpret(nodes);
-                    Word_Mua name = value.toWord();
-                    return thing_mua(name);
-                }
-                case "print":
-                {
-                    nodes.remove(0);
-                    return print_mua(interpret(nodes));
-                }
-                case "read":
-                {
-                    nodes.remove(0);
-                    return read_mua();
-                }
-                case "add":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    return add_mua(a.toNumber(),b.toNumber());
-                }
-                case "sub":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    return sub_mua(a.toNumber(),b.toNumber());
-                }
-                case "mul":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    return mul_mua(a.toNumber(),b.toNumber());
-                }
-                case "div":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    return div_mua(a.toNumber(),b.toNumber());
-                }
-                case "mod":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    return mod_mua(a.toNumber(),b.toNumber());
-                }
-                case "erase":
-                {
-                    nodes.remove(0);
-                    Value_Mua value =interpret(nodes);
-                    Word_Mua name = value.toWord();
-                    return erase_mua(name);
-                }
-                case "isname":
-                {
-                    nodes.remove(0);
-                    Value_Mua value =interpret(nodes);
-                    Word_Mua name = value.toWord();
-                    return isname_mua(name);
-                }
-                case "run":
-                {
-                    nodes.remove(0);
-                    Value_Mua value =interpret(nodes);
-                    List_Mua list = value.toList();
-                    return run_mua(list);
-                }
-                //记得+run!
-                case "eq":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = eq_mua(a,b);
-                    return res;
-                }
-                case "gt":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = gt_mua(a,b);
-                    return res;
-                }
-                case "lt":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = lt_mua(a,b);
-                    return res;
-                }
-                case "and":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = and_mua(a.toBool(),b.toBool());
-                    return res;
-                }
-                case "or":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = or_mua(a.toBool(),b.toBool());
-                    return res;
-                }
-                case "not":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = not_mua(a.toBool());
-                    return res;
-                }
-                case "if":
-                {
-                    nodes.remove(0);
-                    Value_Mua j =interpret(nodes);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua b =interpret(nodes);
-                    Value_Mua res = if_mua(j.toBool(),a.toList(),b.toList());
-                    return res;
-                }
-                case "isnumber":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = isnumber_mua(a);
-                    return res;
-                }
-                case "isword":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = isword_mua(a);
-                    return res;
-                }
-                case "islist":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = islist_mua(a);
-                    return res;
-                }
-                case "isbool":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = isbool_mua(a);
-                    return res;
-                }
-                case "isempty":
-                {
-                    nodes.remove(0);
-                    Value_Mua a =interpret(nodes);
-                    Value_Mua res = isempty_mua(a);
-                    return res;
-                }
-                default:
-                {
-
-                    String temp = nodes.get(0);
-                    nodes.remove(0);
-                    if(Variable_Map.containsKey(temp))
-                    {
-                        return Func_Mua(temp);
-                    }
-                    else
-                    {
-                        String l = '\"' + temp;
-                        return new Word_Mua(l, temp);
-                    }
-                }
-            }
-        }
-    }
-    Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k)
+    Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
     {
         if(nodes.isEmpty()) return new Value_Mua();
         //thing
@@ -283,9 +39,9 @@ public class Interpreter_Mua {
         {
             //ress.add(new Value_Mua());
             nodes.set(0, nodes.get(0).substring(1));
-            Value_Mua value =interpret(nodes, ress, k);
+            Value_Mua value =interpret(nodes, ress, k, env_name);
             Word_Mua name = value.toWord();
-            Value_Mua res=thing_mua(name);
+            Value_Mua res=thing_mua(name, env_name);
             //ress.set(k,res);
             return res;
         }
@@ -323,7 +79,7 @@ public class Interpreter_Mua {
         //infix
         else if(nodes.get(0).charAt(0)=='(')
         {
-            Value_Mua l = infix(nodes);
+            Value_Mua l = infix(nodes, env_name);
             return l;
         }
         else
@@ -338,8 +94,8 @@ public class Interpreter_Mua {
                     nodes.remove(0);
                     nodes.remove(0);
                     Word_Mua name = new Word_Mua(l,v);
-                    Value_Mua value =interpret(nodes, ress, k+1);
-                    Value_Mua res = make_mua(name, value);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua res = make_mua(name, value,env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -347,9 +103,9 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua value =interpret(nodes, ress, k+1);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
-                    Value_Mua res = thing_mua(name);
+                    Value_Mua res = thing_mua(name,env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -357,7 +113,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua res = print_mua(interpret(nodes, ress, k+1));
+                    Value_Mua res = print_mua(interpret(nodes, ress, k+1, env_name));
                     ress.set(k,res);
                     return res;
                 }
@@ -373,8 +129,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = add_mua(a.toNumber(),b.toNumber());
                     ress.set(k,res);
                     return res;
@@ -383,8 +139,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = sub_mua(a.toNumber(),b.toNumber());
                     ress.set(k,res);
                     return res;
@@ -393,8 +149,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = mul_mua(a.toNumber(),b.toNumber());
                     ress.set(k,res);
                     return res;
@@ -403,8 +159,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = div_mua(a.toNumber(),b.toNumber());
                     ress.set(k,res);
                     return res;
@@ -413,8 +169,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = mod_mua(a.toNumber(),b.toNumber());
                     ress.set(k,res);
                     return res;
@@ -423,7 +179,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua value =interpret(nodes, ress, k+1);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
                     Value_Mua res = erase_mua(name);
                     ress.set(k,res);
@@ -433,9 +189,9 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua value =interpret(nodes, ress, k+1);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
-                    Value_Mua res = isname_mua(name);
+                    Value_Mua res = isname_mua(name,env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -443,9 +199,9 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua value =interpret(nodes, ress, k+1);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     List_Mua list = value.toList();
-                    Value_Mua res = run_mua(list);
+                    Value_Mua res = run_mua(list,env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -453,8 +209,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = eq_mua(a,b);
                     ress.set(k,res);
                     return res;
@@ -463,8 +219,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = gt_mua(a,b);
                     ress.set(k,res);
                     return res;
@@ -473,8 +229,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = lt_mua(a,b);
                     ress.set(k,res);
                     return res;
@@ -483,8 +239,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = and_mua(a.toBool(),b.toBool());
                     ress.set(k,res);
                     return res;
@@ -493,8 +249,8 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = or_mua(a.toBool(),b.toBool());
                     ress.set(k,res);
                     return res;
@@ -503,7 +259,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = not_mua(a.toBool());
                     ress.set(k,res);
                     return res;
@@ -512,10 +268,10 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua j =interpret(nodes, ress, k+1);
-                    Value_Mua a =interpret(nodes, ress, k+1);
-                    Value_Mua b =interpret(nodes, ress, k+1);
-                    Value_Mua res = if_mua(j.toBool(),a.toList(),b.toList());
+                    Value_Mua j =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua b =interpret(nodes, ress, k+1, env_name);
+                    Value_Mua res = if_mua(j.toBool(),a.toList(),b.toList(),env_name);
                     ress.set(k,res);
                     return res;
                 }
@@ -523,7 +279,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = isnumber_mua(a);
                     ress.set(k,res);
                     return res;
@@ -532,7 +288,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = isword_mua(a);
                     ress.set(k,res);
                     return res;
@@ -541,7 +297,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = islist_mua(a);
                     ress.set(k,res);
                     return res;
@@ -550,7 +306,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = isbool_mua(a);
                     ress.set(k,res);
                     return res;
@@ -559,18 +315,25 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua a =interpret(nodes, ress, k+1);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
                     Value_Mua res = isempty_mua(a);
                     ress.set(k,res);
                     return res;
                 }
                 default:
                 {
-                    //A word
+
                     String temp = nodes.get(0);
                     nodes.remove(0);
-                    String l = '\"' + temp;
-                    return new Word_Mua(l, temp);
+                    if(Variable_Map.containsKey(temp))
+                    {
+                        return Func_Mua(temp);
+                    }
+                    else
+                    {
+                        String l = '\"' + temp;
+                        return new Word_Mua(l, temp);
+                    }
                 }
             }
         }
@@ -613,7 +376,7 @@ public class Interpreter_Mua {
         }
         return new List_Mua(literal);
     }
-    Number_Mua infix(List<String> nodes)
+    Number_Mua infix(List<String> nodes, String env_name)
     {
         Stack<Number_Mua> num_stack = new Stack<Number_Mua>();
         Stack<infix_op> op_stack = new Stack<infix_op>();
@@ -630,9 +393,9 @@ public class Interpreter_Mua {
             if(str.charAt(0)==':')
             {
                 nodes.set(i, nodes.get(i).substring(1));
-                Value_Mua value =interpret(nodes.subList(i, nodes.size()));
+                Value_Mua value =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                 Word_Mua name = value.toWord();
-                nodes.add(i, thing_mua(name).literal);
+                nodes.add(i, thing_mua(name,env_name).literal);
                 i++;
                 continue;
             }
@@ -641,40 +404,40 @@ public class Interpreter_Mua {
                 case "add":
                 {
                     nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                     nodes.add(i,add_mua(a.toNumber(),b.toNumber()).literal);
                     break;
                 }
                 case "sub":
                 {
                     nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                     nodes.add(i,sub_mua(a.toNumber(),b.toNumber()).literal);
                     break;
                 }
                 case "mul":
                 {
                     nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                     nodes.add(i,mul_mua(a.toNumber(),b.toNumber()).literal);
                     break;
                 }
                 case "div":
                 {
                     nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                     nodes.add(i,div_mua(a.toNumber(),b.toNumber()).literal);
                     break;
                 }
                 case "mod":
                 {
                     nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()));
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()));
+                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
+                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
                     nodes.add(i,mod_mua(a.toNumber(),b.toNumber()).literal);
                     break;
                 }
@@ -745,70 +508,22 @@ public class Interpreter_Mua {
                 i++;
                 nodes.remove(0);
             }
-            //PREFIX OP
-            /*else
-            {
-                switch (str)
-                {
-                    case "add":
-                    {
-                        i++;
-                        nodes.remove(0);
-                        Value_Mua a =interpret(nodes);
-                        Value_Mua b =interpret(nodes);
-                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
-                        break;
-                    }
-                    case "sub":
-                    {
-                        i++;
-                        nodes.remove(0);
-                        Value_Mua a =interpret(nodes);
-                        Value_Mua b =interpret(nodes);
-                        num_stack.push(sub_mua(a.toNumber(),b.toNumber()));
-                        break;
-                    }
-                    case "mul":
-                    {
-                        i++;
-                        nodes.remove(0);
-                        Value_Mua a =interpret(nodes);
-                        Value_Mua b =interpret(nodes);
-                        num_stack.push(mul_mua(a.toNumber(),b.toNumber()));
-                        break;
-                    }
-                    case "div":
-                    {
-                        i++;
-                        nodes.remove(0);
-                        Value_Mua a =interpret(nodes);
-                        Value_Mua b =interpret(nodes);
-                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
-                        break;
-                    }
-                    case "mod":
-                    {
-                        i++;
-                        nodes.remove(0);
-                        Value_Mua a =interpret(nodes);
-                        Value_Mua b =interpret(nodes);
-                        num_stack.push(add_mua(a.toNumber(),b.toNumber()));
-                        break;
-                    }
-                }
-            }*/
         }
         return num_stack.pop();
     }
-    Value_Mua make_mua(Word_Mua name, Value_Mua value)
+    Value_Mua make_mua(Word_Mua name, Value_Mua value, String env_name)
     {
-        Variable_Map.put(name.word_value.toString(), value);
+        HashMap<String,Value_Mua> local_env = Env.get(env_name);
+        local_env.put(name.word_value.toString(), value);
         return value;
     }
-    Value_Mua thing_mua(Word_Mua word_name)
+    Value_Mua thing_mua(Word_Mua word_name, String env_name)
     {
         String name = word_name.word_value.toString();
-        if(Variable_Map.containsKey(name)) return Variable_Map.get(name);
+        HashMap<String,Value_Mua> local_env = Env.get(env_name);
+        HashMap<String,Value_Mua> global_env = Env.get("global");
+        if(local_env.containsKey(name)) return Variable_Map.get(name);
+        else if(global_env.containsKey(name)) return Variable_Map.get(name);
         else return new Value_Mua();
     }
     Value_Mua print_mua(Value_Mua value)
@@ -852,17 +567,20 @@ public class Interpreter_Mua {
         if(Variable_Map.containsKey(name)) return Variable_Map.remove(name);
         else return new Value_Mua();
     }
-    Bool_Mua isname_mua(Word_Mua word_name)
+    Bool_Mua isname_mua(Word_Mua word_name, String env_name)
     {
         String name = word_name.word_value.toString();
-        if(Variable_Map.containsKey(name)) return new Bool_Mua(true);
+        HashMap<String,Value_Mua> local_env = Env.get(env_name);
+        HashMap<String,Value_Mua> global_env = Env.get("global");
+        if(local_env.containsKey(name)) return new Bool_Mua(true);
+        else if(global_env.containsKey(name)) return new Bool_Mua(true);
         else return new Bool_Mua(false);
     }
-    Value_Mua run_mua(List_Mua list)
+    Value_Mua run_mua(List_Mua list, String env_name)
     {
         ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
         int k=0;
-        while(!list.list_value.isEmpty())   interpret(list.list_value, ress, k);
+        while(!list.list_value.isEmpty())   interpret(list.list_value, ress, k, env_name);
         return ress.get(ress.size()-1);
     }
     Number_Mua add_mua(Number_Mua a, Number_Mua b)
@@ -916,16 +634,16 @@ public class Interpreter_Mua {
     {
         return new Bool_Mua(!a.bool_value);
     }
-    Value_Mua if_mua(Bool_Mua j, List_Mua a, List_Mua b)
+    Value_Mua if_mua(Bool_Mua j, List_Mua a, List_Mua b, String env_name)
     {
         Value_Mua res;
         if(j.bool_value)
         {
-            res = interpret(a.list_value);
+            res = interpret(a.list_value,new ArrayList<Value_Mua>(),0, env_name);
         }
         else
         {
-            res = interpret(b.list_value);
+            res = interpret(b.list_value,new ArrayList<Value_Mua>(),0, env_name);
         }
         if(res.literal.equals("")) return new List_Mua("");
         return res;
@@ -953,10 +671,12 @@ public class Interpreter_Mua {
     Value_Mua Func_Mua(String func_name)
     {
         List_Mua func = new List_Mua(Variable_Map.get(func_name));
+        String env_name = func_name;
+        Value_Mua res = new Value_Mua();
         //新的对象，以防函数只能用一次
         List temp_nodes = func.list_value;
-        List_Mua func_argu = interpret(temp_nodes).toList();
-        List_Mua func_code = interpret(temp_nodes).toList();
-
+        List_Mua func_argu = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
+        List_Mua func_code = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
+        return res;
     }
 }
