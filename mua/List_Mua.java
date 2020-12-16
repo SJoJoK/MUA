@@ -3,7 +3,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class List_Mua extends Value_Mua {
+    String regex_func = "^\\[\\[.*\\] \\[.*\\]\\]";
     ArrayList<String> list_value;
+    Boolean isfunc = false;
     List_Mua()
     {
         super();
@@ -15,12 +17,6 @@ public class List_Mua extends Value_Mua {
         super("[]");
         Type_Mua=TYPE_MUA.LIST;
         list_value = new ArrayList<String>();
-    }
-    List_Mua(ArrayList<String> value)
-    {
-        super('['+value.toString().trim()+']');
-        Type_Mua=TYPE_MUA.LIST;
-        list_value = value;
     }
     List_Mua(String value)
     {
@@ -41,6 +37,7 @@ public class List_Mua extends Value_Mua {
                 .replace("*", " * ").replace("/", " / ")
                 .replace("%", " % ").trim().split("\\s+");
         list_value = new ArrayList<String>(Arrays.asList(nodes));
+        if(this.literal.matches(regex_func)) isfunc=true;
     }
     List_Mua(Value_Mua v)
     {
@@ -54,6 +51,7 @@ public class List_Mua extends Value_Mua {
                 .replace("*", " * ").replace("/", " / ")
                 .replace("%", " % ").trim().split("\\s+");
         list_value = new ArrayList<String>(Arrays.asList(nodes));
+        if(this.literal.matches(regex_func)) isfunc=true;
     }
     void append(String e)
     {

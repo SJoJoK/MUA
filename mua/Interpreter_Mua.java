@@ -5,7 +5,6 @@ import java.util.*;
 public class Interpreter_Mua {
     String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
     String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
-
     HashMap<String,Value_Mua> Variable_Map_Global;
     HashMap<String,HashMap<String, Value_Mua>> Env;
     Scanner scan;
@@ -350,7 +349,12 @@ public class Interpreter_Mua {
                             String l = '\"' + temp;
                             return new Word_Mua(l, temp);
                         }
-                        else //如果是表，则可能是函数..
+                        else if(!Env.get(env_name).get(temp).toList().isfunc)
+                        {
+                            String l = '\"' + temp;
+                            return new Word_Mua(l, temp);
+                        }
+                        else
                             return Func_Mua(nodes,env_name,env_name, temp);
                     }
                     else if(Variable_Map_Global.containsKey(temp))
@@ -361,7 +365,12 @@ public class Interpreter_Mua {
                             String l = '\"' + temp;
                             return new Word_Mua(l, temp);
                         }
-                        else  //如果是表，则可能是函数..
+                        else if(!Variable_Map_Global.get(temp).toList().isfunc)
+                        {
+                            String l = '\"' + temp;
+                            return new Word_Mua(l, temp);
+                        }
+                        else
                             return Func_Mua(nodes,env_name,"global",temp);
                     }
                     else
