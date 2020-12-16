@@ -15,21 +15,19 @@ public class Interpreter_Mua {
         Env = new HashMap<>();
         Env.put("global",Variable_Map_Global);
         scan = new Scanner(System.in);
-        String inst = new String();
+        StringBuilder program = new StringBuilder();
         while(scan.hasNextLine())
         {
-            inst = scan.nextLine();
-            //if(inst.equals("")) break;
-            // 改成循环
-            String[] nodes = inst.replace("("," ( ").replace(")"," ) ")
-                                 .replace("["," [ ").replace("]"," ] ")
-                                 .replace("+", " + ").replace("-", " - ")
-                                 .replace("*", " * ").replace("/", " / ")
-                                 .replace("%", " % ").trim().split("\\s+");
-            ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
-            ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
-            interpret(nodes_list, ress, 0, "global");
+            program.append(scan.nextLine());
         }
+        String[] nodes = program.toString().replace("("," ( ").replace(")"," ) ")
+                             .replace("["," [ ").replace("]"," ] ")
+                             .replace("+", " + ").replace("-", " - ")
+                             .replace("*", " * ").replace("/", " / ")
+                             .replace("%", " % ").trim().split("\\s+");
+        ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
+        ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
+        interpret(nodes_list, ress, 0, "global");
     }
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
     {
@@ -320,6 +318,24 @@ public class Interpreter_Mua {
                     ress.set(k,res);
                     return res;
                 }
+                case "return":
+                {
+                    ress.add(new Value_Mua());
+                    nodes.remove(0);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    ress.set(k,a);
+                    return a;
+                }
+                case "export":
+                {
+                    ress.add(new Value_Mua());
+                    nodes.remove(0);
+                    Value_Mua a =interpret(nodes, ress, k+1, env_name);
+                    Word_Mua name = a.toWord();
+                    Value_Mua res = export_mua(name, env_name);
+                    ress.set(k,res);
+                    return res;
+                }
                 default:
                 {
 
@@ -536,7 +552,7 @@ public class Interpreter_Mua {
         {
             case WORD:str = value.literal.substring(1);break;
             case LIST:str = value.literal.substring(1,value.literal.length()-2);break;
-            case BOOL:str = value.literal;break;
+            case BOOL:
             case NUMBER:str = value.literal;break;
             default:str="";break;
         }
@@ -682,7 +698,7 @@ public class Interpreter_Mua {
 
         Value_Mua res = new Value_Mua();
 
-        List temp_nodes = func.list_value;
+        ArrayList<String> temp_nodes = func.list_value;
         List_Mua func_argu_name = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
         List_Mua func_code = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
         int argc = func_argu_name.list_value.size();
@@ -700,5 +716,19 @@ public class Interpreter_Mua {
         Env.put(this_env_name, this_env);
         res = interpret(func_code.list_value,new ArrayList<Value_Mua>(),0,this_env_name);
         return res;
+    }
+    Value_Mua export_mua(Word_Mua name, String env_name)
+    {
+        String v_name = name.word_value.toString();
+        Value_Mua v = Env.get(env_name).get(v_name);
+        if(!Variable_Map_Global.containsKey(v_name))
+        {
+            Variable_Map_Global.put(v_name,v);
+        }
+        else
+        {
+            Variable_Map_Global.replace(v_name,v);
+        }
+        return v;
     }
 }
