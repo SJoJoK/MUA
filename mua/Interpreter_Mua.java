@@ -1,24 +1,19 @@
 package mua;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.regex.*;
 
 public class Interpreter_Mua {
     String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
     String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
 
-    HashMap<String,Bool_Mua> Bool_Map;
-    HashMap<String,List_Mua> List_Map;
-    HashMap<String,Number_Mua> Number_Map;
-    HashMap<String,Word_Mua> Word_Map;
+    HashMap<String,Value_Mua> Variable_Map;
+    HashMap<String,HashMap<String, Value_Mua>> Env;
     Scanner scan;
     public void begin()
     {
-        Bool_Map = new HashMap<>();
-        List_Map = new HashMap<>();
-        Number_Map = new HashMap<>();
-        Word_Map = new HashMap<>();
+        Variable_Map = new HashMap<>();
+        Env = new HashMap<>();
+        Env.put("global",Variable_Map);
         scan = new Scanner(System.in);
         String inst = new String();
         while(scan.hasNextLine())
@@ -32,7 +27,7 @@ public class Interpreter_Mua {
                                  .replace("*", " * ").replace("/", " / ")
                                  .replace("%", " % ").trim().split("\\s+");
             ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
-            interpret(nodes_list);
+            interpret(nodes_list, "global");
         }
     }
     Value_Mua interpret(List<String> nodes)
@@ -264,11 +259,18 @@ public class Interpreter_Mua {
                 }
                 default:
                 {
-                    //A word
+
                     String temp = nodes.get(0);
                     nodes.remove(0);
-                    String l = '\"' + temp;
-                    return new Word_Mua(l, temp);
+                    if(Variable_Map.containsKey(temp))
+                    {
+                        return Func_Mua(temp);
+                    }
+                    else
+                    {
+                        String l = '\"' + temp;
+                        return new Word_Mua(l, temp);
+                    }
                 }
             }
         }
@@ -316,6 +318,12 @@ public class Interpreter_Mua {
         {
             String temp = nodes.get(0);
             Value_Mua l = build_list(nodes);
+            return l;
+        }
+        //infix
+        else if(nodes.get(0).charAt(0)=='(')
+        {
+            Value_Mua l = infix(nodes);
             return l;
         }
         else
@@ -571,20 +579,31 @@ public class Interpreter_Mua {
     {
         StringBuilder literal = new StringBuilder("");
         Iterator<String> iter = nodes.iterator();
+        int lb=0;
         while(iter.hasNext())
         {
             String str=iter.next();
             if("[".equals(str))
             {
+                lb++;
                 literal.append("[");
                 iter.remove();
             }
             else if("]".equals(str))
             {
+                lb--;
                 literal.deleteCharAt(literal.length()-1);//移除空格
-                literal.append("]");
-                iter.remove();
-                break;
+                if(lb==0)
+                {
+                    literal.append("]");
+                    iter.remove();
+                    break;
+                }
+                else
+                {
+                    literal.append("]").append(" ");
+                    iter.remove();
+                }
             }
             else
             {
@@ -783,23 +802,13 @@ public class Interpreter_Mua {
     }
     Value_Mua make_mua(Word_Mua name, Value_Mua value)
     {
-        switch(value.Type_Mua)
-        {
-            case WORD:Word_Map.put(name.word_value.toString(),new Word_Mua(value));break;
-            case LIST:List_Map.put(name.word_value.toString(),new List_Mua(value));break;
-            case BOOL:Bool_Map.put(name.word_value.toString(), new Bool_Mua(value));break;
-            case NUMBER:Number_Map.put(name.word_value.toString(), new Number_Mua(value));break;
-            default:Word_Map.put(name.word_value.toString(),new Word_Mua(value));break;
-        }
+        Variable_Map.put(name.word_value.toString(), value);
         return value;
     }
     Value_Mua thing_mua(Word_Mua word_name)
     {
         String name = word_name.word_value.toString();
-        if(Word_Map.containsKey(name)) return Word_Map.get(name);
-        else if(Number_Map.containsKey(name)) return Number_Map.get(name);
-        else if(Bool_Map.containsKey(name)) return Bool_Map.get(name);
-        else if(List_Map.containsKey(name)) return List_Map.get(name);
+        if(Variable_Map.containsKey(name)) return Variable_Map.get(name);
         else return new Value_Mua();
     }
     Value_Mua print_mua(Value_Mua value)
@@ -840,19 +849,13 @@ public class Interpreter_Mua {
     Value_Mua erase_mua(Word_Mua word_name)
     {
         String name = word_name.word_value.toString();
-        if(Word_Map.containsKey(name)) return Word_Map.remove(name);
-        else if(Number_Map.containsKey(name)) return Number_Map.remove(name);
-        else if(Bool_Map.containsKey(name)) return Bool_Map.remove(name);
-        else if(List_Map.containsKey(name)) return List_Map.remove(name);
+        if(Variable_Map.containsKey(name)) return Variable_Map.remove(name);
         else return new Value_Mua();
     }
     Bool_Mua isname_mua(Word_Mua word_name)
     {
         String name = word_name.word_value.toString();
-        if(Word_Map.containsKey(name)) return new Bool_Mua(true);
-        else if(Number_Map.containsKey(name)) return new Bool_Mua(true);
-        else if(Bool_Map.containsKey(name)) return new Bool_Mua(true);
-        else if(List_Map.containsKey(name)) return new Bool_Mua(true);
+        if(Variable_Map.containsKey(name)) return new Bool_Mua(true);
         else return new Bool_Mua(false);
     }
     Value_Mua run_mua(List_Mua list)
@@ -946,5 +949,14 @@ public class Interpreter_Mua {
     Bool_Mua isempty_mua(Value_Mua v)
     {
         return v.isempty();
+    }
+    Value_Mua Func_Mua(String func_name)
+    {
+        List_Mua func = new List_Mua(Variable_Map.get(func_name));
+        //新的对象，以防函数只能用一次
+        List temp_nodes = func.list_value;
+        List_Mua func_argu = interpret(temp_nodes).toList();
+        List_Mua func_code = interpret(temp_nodes).toList();
+
     }
 }

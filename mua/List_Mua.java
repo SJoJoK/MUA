@@ -35,16 +35,12 @@ public class List_Mua extends Value_Mua {
         Type_Mua=TYPE_MUA.LIST;
         literal.deleteCharAt(0);
         literal.deleteCharAt(literal.length() - 1);
-        String[] temp = literal.toString().trim().split(" ");
-        list_value = new ArrayList<String>(Arrays.asList(temp));
-    }
-    List_Mua(String l, String value)
-    {
-        super(l);
-        Type_Mua=TYPE_MUA.LIST;
-        value = value.trim();
-        String[] temp = value.split(" ");
-        list_value = new ArrayList<String>(Arrays.asList(temp));
+        String[] nodes = literal.toString().replace("("," ( ").replace(")"," ) ")
+                .replace("["," [ ").replace("]"," ] ")
+                .replace("+", " + ").replace("-", " - ")
+                .replace("*", " * ").replace("/", " / ")
+                .replace("%", " % ").trim().split("\\s+");
+        list_value = new ArrayList<String>(Arrays.asList(nodes));
     }
     List_Mua(Value_Mua v)
     {
@@ -52,8 +48,12 @@ public class List_Mua extends Value_Mua {
         Type_Mua=TYPE_MUA.LIST;
         String value = v.literal.trim();
         value=value.substring(1,value.length()-1);
-        String[] temp = value.split(" ");
-        list_value = new ArrayList<String>(Arrays.asList(temp));
+        String[] nodes = value.replace("("," ( ").replace(")"," ) ")
+                .replace("["," [ ").replace("]"," ] ")
+                .replace("+", " + ").replace("-", " - ")
+                .replace("*", " * ").replace("/", " / ")
+                .replace("%", " % ").trim().split("\\s+");
+        list_value = new ArrayList<String>(Arrays.asList(nodes));
     }
     void append(String e)
     {
