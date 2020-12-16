@@ -6,15 +6,13 @@ public class Value_Mua {
     {
         VALUE, NUMBER, WORD, LIST, BOOL
     }
-    TYPE_MUA Type_Mua;
+    TYPE_MUA Type_Mua=TYPE_MUA.VALUE;
     Value_Mua()
     {
-        Type_Mua=TYPE_MUA.VALUE;
     }
     Value_Mua(String l)
     {
         literal= l;
-        Type_Mua=TYPE_MUA.VALUE;
     }
     public Number_Mua toNumber()
     {

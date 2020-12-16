@@ -4,7 +4,8 @@ import java.util.*;
 
 public class Interpreter_Mua {
     String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
-    String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
+    //String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
+    String regex_ops = "[+\\-*/%()]";
     HashMap<String,Value_Mua> Variable_Map_Global;
     HashMap<String,HashMap<String, Value_Mua>> Env;
     Scanner scan;
@@ -25,8 +26,8 @@ public class Interpreter_Mua {
                              .replace("+", " + ").replace("-", " - ")
                              .replace("*", " * ").replace("/", " / ")
                              .replace("%", " % ").trim().split("\\s+");
-        ArrayList<String> nodes_list = new ArrayList<String>(Arrays.asList(nodes));
-        ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
+        ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
+        ArrayList<Value_Mua> ress = new ArrayList<>();
         while(nodes_list.size()>0)
         {
             interpret(nodes_list, ress, 0, "global");
@@ -42,9 +43,8 @@ public class Interpreter_Mua {
             nodes.set(0, nodes.get(0).substring(1));
             Value_Mua value =interpret(nodes, ress, k, env_name);
             Word_Mua name = value.toWord();
-            Value_Mua res=thing_mua(name, env_name);
             //ress.set(k,res);
-            return res;
+            return thing_mua(name, env_name);
         }
         //number
         else if(nodes.get(0).matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
@@ -73,15 +73,12 @@ public class Interpreter_Mua {
         //list
         else if(nodes.get(0).charAt(0)=='[')
         {
-            String temp = nodes.get(0);
-            Value_Mua l = build_list(nodes);
-            return l;
+            return build_list(nodes);
         }
         //infix
         else if(nodes.get(0).charAt(0)=='(')
         {
-            Value_Mua l = infix(nodes, env_name);
-            return l;
+            return infix(nodes, env_name);
         }
         else
         {
@@ -384,7 +381,7 @@ public class Interpreter_Mua {
     }
     Value_Mua build_list(List<String> nodes)
     {
-        StringBuilder literal = new StringBuilder("");
+        StringBuilder literal = new StringBuilder();
         Iterator<String> iter = nodes.iterator();
         int lb=0;
         while(iter.hasNext())
@@ -423,13 +420,13 @@ public class Interpreter_Mua {
     }
     Number_Mua infix(List<String> nodes, String env_name)
     {
-        Stack<Number_Mua> num_stack = new Stack<Number_Mua>();
-        Stack<infix_op> op_stack = new Stack<infix_op>();
-        Value_Mua tmp = new Value_Mua();
+        Stack<Number_Mua> num_stack = new Stack<>();
+        Stack<infix_op> op_stack = new Stack<>();
+        Value_Mua tmp;
         int left=0;
         int right=0;
         int length=0;
-        String str = "";
+        String str;
         int i = 0;
         Iterator<String> iter_s = nodes.iterator();
         //计算中缀长度
@@ -445,72 +442,12 @@ public class Interpreter_Mua {
         while(i<length&&i<nodes.size())
         {
             str = nodes.get(i);
-            if(str.matches(regex_num)||str.matches(regex_ops))
+            if((!str.matches(regex_num))&&(!str.matches(regex_ops)))
             {
-                i++;
-                continue;
-            }
-            //前缀
-            else
-            {
-                tmp = interpret(nodes.subList(i,nodes.size()),new ArrayList<Value_Mua>(),0,env_name);
+                tmp = interpret(nodes.subList(i,nodes.size()), new ArrayList<>(),0,env_name);
                 nodes.add(i,tmp.literal);
-                i++;
-                continue;
             }
-            /*if(str.charAt(0)==':')
-            {
-                nodes.set(i, nodes.get(i).substring(1));
-                Value_Mua value =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                Word_Mua name = value.toWord();
-                nodes.add(i, thing_mua(name,env_name).literal);
-                i++;
-                continue;
-            }
-            switch (str)
-            {
-                case "add":
-                {
-                    nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    nodes.add(i,add_mua(a.toNumber(),b.toNumber()).literal);
-                    break;
-                }
-                case "sub":
-                {
-                    nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    nodes.add(i,sub_mua(a.toNumber(),b.toNumber()).literal);
-                    break;
-                }
-                case "mul":
-                {
-                    nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    nodes.add(i,mul_mua(a.toNumber(),b.toNumber()).literal);
-                    break;
-                }
-                case "div":
-                {
-                    nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    nodes.add(i,div_mua(a.toNumber(),b.toNumber()).literal);
-                    break;
-                }
-                case "mod":
-                {
-                    nodes.remove(i);
-                    Value_Mua a =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    Value_Mua b =interpret(nodes.subList(i, nodes.size()),new ArrayList<Value_Mua>(),0, env_name);
-                    nodes.add(i,mod_mua(a.toNumber(),b.toNumber()).literal);
-                    break;
-                }
-                default:;
-            }*/
+            i++;
         }
         Iterator<String> iter = nodes.iterator();
         length = 0;
@@ -523,7 +460,6 @@ public class Interpreter_Mua {
             if(str.equals(")")) right++;
             if(left==right) break;
         }
-        i = 0;
         for(i=0;i<length - 1;i++)
         {
             if(nodes.get(i+1).equals("-"))
@@ -541,7 +477,7 @@ public class Interpreter_Mua {
         {
             str=nodes.get(0);
             //OPERATER
-            if(str.matches("\\+|-|\\*|/|%|\\(|\\)"))
+            if(str.matches(regex_ops))
             {
                 infix_op temp = new infix_op(str);
                 if(op_stack.isEmpty())
@@ -647,7 +583,7 @@ public class Interpreter_Mua {
     }
     Value_Mua run_mua(List_Mua list, String env_name)
     {
-        ArrayList<Value_Mua> ress = new ArrayList<Value_Mua>();
+        ArrayList<Value_Mua> ress = new ArrayList<>();
         int k=0;
         while(!list.list_value.isEmpty())   interpret(list.list_value, ress, k, env_name);
         return ress.get(ress.size()-1);
@@ -708,11 +644,11 @@ public class Interpreter_Mua {
         Value_Mua res;
         if(j.bool_value)
         {
-            res = interpret(a.list_value,new ArrayList<Value_Mua>(),0, env_name);
+            res = interpret(a.list_value, new ArrayList<>(),0, env_name);
         }
         else
         {
-            res = interpret(b.list_value,new ArrayList<Value_Mua>(),0, env_name);
+            res = interpret(b.list_value, new ArrayList<>(),0, env_name);
         }
         if(res.literal.equals("")) return new List_Mua("");
         return res;
@@ -739,7 +675,7 @@ public class Interpreter_Mua {
     }
     Value_Mua Func_Mua(List<String> father_nodes, String father_env_name, String func_from_name,String func_name)
     {
-        HashMap<String,Value_Mua> father_env = Env.get(father_env_name);
+        //HashMap<String,Value_Mua> father_env = Env.get(father_env_name);
         HashMap<String,Value_Mua> func_from_env = Env.get(func_from_name);
         HashMap<String,Value_Mua> this_env = new HashMap<>();
         List_Mua func = new List_Mua(func_from_env.get(func_name));//获得函数定义，新对象，以防函数只能用一次
@@ -748,15 +684,15 @@ public class Interpreter_Mua {
         Value_Mua res = new Value_Mua();
 
         ArrayList<String> temp_nodes = func.list_value;
-        List_Mua func_argu_name = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
-        List_Mua func_code = interpret(temp_nodes,new ArrayList<Value_Mua>(),0,func_name).toList();
+        List_Mua func_argu_name = interpret(temp_nodes, new ArrayList<>(),0,func_name).toList();
+        List_Mua func_code = interpret(temp_nodes, new ArrayList<>(),0,func_name).toList();
         int argc = func_argu_name.list_value.size();
         //传入参数
         ArrayList<Value_Mua> argu_value = new ArrayList<>();
         for(int i=0;i<argc;i++)
         {
             argu_value.add(new Value_Mua());
-            argu_value.set(i, interpret(father_nodes, new ArrayList<Value_Mua>(), 0, father_env_name));
+            argu_value.set(i, interpret(father_nodes, new ArrayList<>(), 0, father_env_name));
         }
         //Bonding
         for(int i=0;i<argc;i++)
@@ -765,7 +701,7 @@ public class Interpreter_Mua {
         }
         Env.put(this_env_name, this_env);
         while(func_code.list_value.size()>0)
-        res = interpret(func_code.list_value,new ArrayList<Value_Mua>(),0,this_env_name);
+        res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
         return res;
     }
     Value_Mua export_mua(Word_Mua name, String env_name)
