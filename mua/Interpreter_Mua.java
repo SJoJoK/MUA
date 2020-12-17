@@ -22,31 +22,34 @@ public class Interpreter_Mua {
             program.append(scan.nextLine());
         }
         String[] nodes = program.toString().replace("("," ( ").replace(")"," ) ")
-                             .replace("["," [ ").replace("]"," ] ")
-                             .replace("+", " + ").replace("-", " - ")
-                             .replace("*", " * ").replace("/", " / ")
-                             .replace("%", " % ").trim().split("\\s+");
+                .replace("["," [ ").replace("]"," ] ")
+                .replace("+", " + ").replace("-", " - ")
+                .replace("*", " * ").replace("/", " / ")
+                .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
         ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
         ArrayList<Value_Mua> ress = new ArrayList<>();
         while(nodes_list.size()>0)
         {
-            interpret(nodes_list, ress, 0, "global");
+            try
+            {
+                interpret(nodes_list, ress, 0, "global");
+            }
+            catch(Throwable e)
+            {
+                break;
+            }
+
         }
     }
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
     {
         if(nodes.isEmpty()) return new Value_Mua();
-        //thing
-        if(nodes.get(0).charAt(0)==':')
-        {
-            //ress.add(new Value_Mua());
-            nodes.set(0, nodes.get(0).substring(1));
-            Value_Mua value =interpret(nodes, ress, k, env_name);
-            Word_Mua name = value.toWord();
-            //ress.set(k,res);
-            return thing_mua(name, env_name);
-        }
         //number
+        if (nodes.get(0).equals(""))
+        {
+            nodes.remove(0);
+            return new Value_Mua();
+        }
         else if(nodes.get(0).matches(regex_num))
         {
             String temp = nodes.get(0);
@@ -108,6 +111,7 @@ public class Interpreter_Mua {
                     return res;
                 }
                 case "thing":
+                case ":":
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
@@ -409,8 +413,9 @@ public class Interpreter_Mua {
             else if("]".equals(str))
             {
                 lb--;
-                if(literal.charAt(literal.length()-1)==' ')
-                literal.deleteCharAt(literal.length()-1);//移除空格
+                if(literal.length()>0)
+                    if(literal.charAt(literal.length()-1)==' ')
+                        literal.deleteCharAt(literal.length()-1);//移除空格
                 if(lb==0)
                 {
                     literal.append("]");
@@ -616,7 +621,7 @@ public class Interpreter_Mua {
         if(a.isnumber().bool_value&&b.isnumber().bool_value)
             return new Bool_Mua(a.toNumber().number_value==b.toNumber().number_value);
         else
-        return new Bool_Mua(a.literal.equals(b.literal));
+            return new Bool_Mua(a.literal.equals(b.literal));
     }
     Bool_Mua lt_mua(Value_Mua a, Value_Mua b)
     {
@@ -699,7 +704,7 @@ public class Interpreter_Mua {
         }
         Env.put(this_env_name, this_env);
         while(func_code.list_value.size()>0)
-        res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
+            res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
         Env.remove(this_env_name);
         return res;
     }
