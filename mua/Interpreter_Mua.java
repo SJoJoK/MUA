@@ -22,10 +22,10 @@ public class Interpreter_Mua {
             program.append(scan.nextLine());
         }
         String[] nodes = program.toString().replace("("," ( ").replace(")"," ) ")
-                             .replace("["," [ ").replace("]"," ] ")
-                             .replace("+", " + ").replace("-", " - ")
-                             .replace("*", " * ").replace("/", " / ")
-                             .replace("%", " % ").trim().split("\\s+");
+                .replace("["," [ ").replace("]"," ] ")
+                .replace("+", " + ").replace("-", " - ")
+                .replace("*", " * ").replace("/", " / ")
+                .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
         ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
         ArrayList<Value_Mua> ress = new ArrayList<>();
         while(nodes_list.size()>0)
@@ -43,18 +43,13 @@ public class Interpreter_Mua {
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
     {
         if(nodes.isEmpty()) return new Value_Mua();
-        //thing
-        if(nodes.get(0).charAt(0)==':')
-        {
-            //ress.add(new Value_Mua());
-            nodes.set(0, nodes.get(0).substring(1));
-            Value_Mua value =interpret(nodes, ress, k, env_name);
-            Word_Mua name = value.toWord();
-            //ress.set(k,res);
-            return thing_mua(name, env_name);
-        }
         //number
-        else if(nodes.get(0).matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
+        if (nodes.get(0).equals(""))
+        {
+            nodes.remove(0);
+            return new Value_Mua();
+        }
+        else if(nodes.get(0).matches(regex_num))
         {
             String temp = nodes.get(0);
             nodes.remove(0);
@@ -85,7 +80,20 @@ public class Interpreter_Mua {
         //infix
         else if(nodes.get(0).charAt(0)=='(')
         {
-            return infix(nodes, env_name);
+
+            int left=0;
+            int right=0;
+            int length=0;
+            String str;
+            //计算中缀长度
+            for (String node : nodes) {
+                length++;
+                str = node;
+                if (str.equals("(")) left++;
+                if (str.equals(")")) right++;
+                if (left == right) break;
+            }
+            return infix(nodes.subList(0,length), env_name);
         }
         else
         {
@@ -102,6 +110,7 @@ public class Interpreter_Mua {
                     return res;
                 }
                 case "thing":
+                case ":":
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
@@ -403,8 +412,9 @@ public class Interpreter_Mua {
             else if("]".equals(str))
             {
                 lb--;
-                if(literal.charAt(literal.length()-1)==' ')
-                literal.deleteCharAt(literal.length()-1);//移除空格
+                if(literal.length()>0)
+                    if(literal.charAt(literal.length()-1)==' ')
+                        literal.deleteCharAt(literal.length()-1);//移除空格
                 if(lb==0)
                 {
                     literal.append("]");
@@ -430,12 +440,11 @@ public class Interpreter_Mua {
         Stack<Number_Mua> num_stack = new Stack<>();
         Stack<infix_op> op_stack = new Stack<>();
         Value_Mua tmp;
-        int left=0;
-        int right=0;
-        int length=0;
         String str;
         int i = 0;
-        Iterator<String> iter_s = nodes.iterator();
+        int length = 0;
+        int left=0;
+        int right=0;
         //替换前缀
         while(i<nodes.size())
         {
@@ -445,23 +454,10 @@ public class Interpreter_Mua {
                 tmp = interpret(nodes.subList(i,nodes.size()), new ArrayList<>(),0,env_name);
                 nodes.add(i,tmp.literal);
             }
-            else if(str.equals("(")) left++;
-            else if(str.equals(")")) right++;
-            if(left==right) break;
             i++;
         }
-        Iterator<String> iter = nodes.iterator();
-        length = 0;
-        //计算中缀长度
-        while(iter.hasNext())
-        {
-            length++;
-            str = iter.next();
-            if(str.equals("(")) left++;
-            if(str.equals(")")) right++;
-            if(left==right) break;
-        }
-        for(i=0;i<length - 1;i++)
+        //添加正负
+        for(i=0;i<nodes.size()-1;i++)
         {
             if(nodes.get(i+1).equals("-"))
             {
@@ -469,11 +465,17 @@ public class Interpreter_Mua {
                 {
                     nodes.remove(i+1);
                     nodes.set(i+1,"-" + nodes.get(i+1));
-                    length--;
                 }
             }
         }
         i=0;
+        for (String node : nodes) {
+            length++;
+            str = node;
+            if (str.equals("(")) left++;
+            if (str.equals(")")) right++;
+            if (left == right) break;
+        }
         while(i<length)
         {
             str=nodes.get(0);
@@ -507,7 +509,7 @@ public class Interpreter_Mua {
                 }
             }
             //NUMBER
-            else if(str.matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
+            else if(str.matches(regex_num))
             {
                 num_stack.push(new Number_Mua(str));
                 i++;
@@ -618,7 +620,7 @@ public class Interpreter_Mua {
         if(a.isnumber().bool_value&&b.isnumber().bool_value)
             return new Bool_Mua(a.toNumber().number_value==b.toNumber().number_value);
         else
-        return new Bool_Mua(a.literal.equals(b.literal));
+            return new Bool_Mua(a.literal.equals(b.literal));
     }
     Bool_Mua lt_mua(Value_Mua a, Value_Mua b)
     {
@@ -701,7 +703,7 @@ public class Interpreter_Mua {
         }
         Env.put(this_env_name, this_env);
         while(func_code.list_value.size()>0)
-        res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
+            res = interpret(func_code.list_value, new ArrayList<>(),0,this_env_name);
         Env.remove(this_env_name);
         return res;
     }
