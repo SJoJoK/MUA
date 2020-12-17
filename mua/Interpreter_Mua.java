@@ -28,7 +28,7 @@ public class Interpreter_Mua {
                 .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
         ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
         ArrayList<Value_Mua> ress = new ArrayList<>();
-        while(nodes_list.size()>0)
+        while(!nodes_list.isEmpty())
         {
             try
             {
@@ -109,8 +109,15 @@ public class Interpreter_Mua {
                     ress.set(k,res);
                     return res;
                 }
-                case "thing":
                 case ":":
+                {
+                    nodes.remove(0);
+                    Value_Mua value =interpret(nodes, ress, k+1, env_name);
+                    Word_Mua name = value.toWord();
+                    Value_Mua res = thing_mua(name,env_name);
+                    return res;
+                }
+                case "thing":
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
@@ -539,8 +546,8 @@ public class Interpreter_Mua {
         {
             case WORD:str = value.literal.substring(1);break;
             case LIST:str = value.literal.substring(1,value.literal.length()-2);break;
-            case BOOL:
-            case NUMBER:str = value.literal;break;
+            case BOOL:str = value.literal;break;
+            case NUMBER:str = String.valueOf(value.toNumber().number_value);break;
             default:str="";break;
         }
         System.out.println(str);
@@ -643,16 +650,15 @@ public class Interpreter_Mua {
     }
     Value_Mua if_mua(Bool_Mua j, List_Mua a, List_Mua b, String env_name)
     {
-        Value_Mua res;
+        Value_Mua res = new Value_Mua();
         if(j.bool_value)
         {
-            res = interpret(a.list_value, new ArrayList<>(),0, env_name);
+            while(!a.list_value.isEmpty()) res = interpret(a.list_value, new ArrayList<>(),0, env_name);
         }
         else
         {
-            res = interpret(b.list_value, new ArrayList<>(),0, env_name);
+            while(!b.list_value.isEmpty()) res = interpret(b.list_value, new ArrayList<>(),0, env_name);
         }
-        if(res.literal.equals("")) return new List_Mua("");
         return res;
     }
     Bool_Mua isnumber_mua(Value_Mua v)
