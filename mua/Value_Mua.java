@@ -9,6 +9,7 @@ public class Value_Mua {
     TYPE_MUA Type_Mua=TYPE_MUA.VALUE;
     Value_Mua()
     {
+        literal="";
     }
     Value_Mua(String l)
     {

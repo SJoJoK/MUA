@@ -47,7 +47,7 @@ public class Interpreter_Mua {
             return thing_mua(name, env_name);
         }
         //number
-        else if(nodes.get(0).matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
+        else if(nodes.get(0).matches(regex_num))
         {
             String temp = nodes.get(0);
             nodes.remove(0);
@@ -78,7 +78,20 @@ public class Interpreter_Mua {
         //infix
         else if(nodes.get(0).charAt(0)=='(')
         {
-            return infix(nodes, env_name);
+
+            int left=0;
+            int right=0;
+            int length=0;
+            String str;
+            //计算中缀长度
+            for (String node : nodes) {
+                length++;
+                str = node;
+                if (str.equals("(")) left++;
+                if (str.equals(")")) right++;
+                if (left == right) break;
+            }
+            return infix(nodes.subList(0,length), env_name);
         }
         else
         {
@@ -116,7 +129,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua res = read_mua();
+                    Value_Mua res = read_mua(nodes);
                     ress.set(k,res);
                     return res;
                 }
@@ -423,23 +436,13 @@ public class Interpreter_Mua {
         Stack<Number_Mua> num_stack = new Stack<>();
         Stack<infix_op> op_stack = new Stack<>();
         Value_Mua tmp;
-        int left=0;
-        int right=0;
-        int length=0;
         String str;
         int i = 0;
-        Iterator<String> iter_s = nodes.iterator();
-        //计算中缀长度
-        while(iter_s.hasNext())
-        {
-            length++;
-            str = iter_s.next();
-            if(str.equals("(")) left++;
-            if(str.equals(")")) right++;
-            if(left==right) break;
-        }
+        int length = 0;
+        int left=0;
+        int right=0;
         //替换前缀
-        while(i<length&&i<nodes.size())
+        while(i<nodes.size())
         {
             str = nodes.get(i);
             if((!str.matches(regex_num))&&(!str.matches(regex_ops)))
@@ -449,18 +452,8 @@ public class Interpreter_Mua {
             }
             i++;
         }
-        Iterator<String> iter = nodes.iterator();
-        length = 0;
-        //计算中缀长度
-        while(iter.hasNext())
-        {
-            length++;
-            str = iter.next();
-            if(str.equals("(")) left++;
-            if(str.equals(")")) right++;
-            if(left==right) break;
-        }
-        for(i=0;i<length - 1;i++)
+        //添加正负
+        for(i=0;i<nodes.size()-1;i++)
         {
             if(nodes.get(i+1).equals("-"))
             {
@@ -468,11 +461,17 @@ public class Interpreter_Mua {
                 {
                     nodes.remove(i+1);
                     nodes.set(i+1,"-" + nodes.get(i+1));
-                    length--;
                 }
             }
         }
         i=0;
+        for (String node : nodes) {
+            length++;
+            str = node;
+            if (str.equals("(")) left++;
+            if (str.equals(")")) right++;
+            if (left == right) break;
+        }
         while(i<length)
         {
             str=nodes.get(0);
@@ -506,7 +505,7 @@ public class Interpreter_Mua {
                 }
             }
             //NUMBER
-            else if(str.matches("(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)"))
+            else if(str.matches(regex_num))
             {
                 num_stack.push(new Number_Mua(str));
                 i++;
@@ -543,16 +542,12 @@ public class Interpreter_Mua {
         System.out.println(str);
         return value;
     }
-    Value_Mua read_mua()
+    Value_Mua read_mua(List<String> nodes)
     {
-        String str = "";
+        String str = nodes.get(0);
+        nodes.remove(0);
         Value_Mua v;
-        if (scan.hasNextLine())
-        {
-            str = scan.nextLine();
-        }
-        String judge = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
-        if(str.matches(judge))
+        if(str.matches(regex_num))
         {
             v = new Value_Mua(str);
             v.Type_Mua= Value_Mua.TYPE_MUA.NUMBER;
