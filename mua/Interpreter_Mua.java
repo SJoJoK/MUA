@@ -30,7 +30,14 @@ public class Interpreter_Mua {
         ArrayList<Value_Mua> ress = new ArrayList<>();
         while(nodes_list.size()>0)
         {
-            interpret(nodes_list, ress, 0, "global");
+            try
+            {
+                interpret(nodes_list, ress, 0, "global");
+            }
+            catch(Throwable e)
+            {
+                break;
+            }
         }
     }
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name)
@@ -116,7 +123,7 @@ public class Interpreter_Mua {
                 {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua res = read_mua();
+                    Value_Mua res = read_mua(nodes);
                     ress.set(k,res);
                     return res;
                 }
@@ -429,17 +436,8 @@ public class Interpreter_Mua {
         String str;
         int i = 0;
         Iterator<String> iter_s = nodes.iterator();
-        //计算中缀长度
-        while(iter_s.hasNext())
-        {
-            length++;
-            str = iter_s.next();
-            if(str.equals("(")) left++;
-            if(str.equals(")")) right++;
-            if(left==right) break;
-        }
         //替换前缀
-        while(i<length&&i<nodes.size())
+        while(i<nodes.size())
         {
             str = nodes.get(i);
             if((!str.matches(regex_num))&&(!str.matches(regex_ops)))
@@ -447,6 +445,9 @@ public class Interpreter_Mua {
                 tmp = interpret(nodes.subList(i,nodes.size()), new ArrayList<>(),0,env_name);
                 nodes.add(i,tmp.literal);
             }
+            else if(str.equals("(")) left++;
+            else if(str.equals(")")) right++;
+            if(left==right) break;
             i++;
         }
         Iterator<String> iter = nodes.iterator();
@@ -543,16 +544,12 @@ public class Interpreter_Mua {
         System.out.println(str);
         return value;
     }
-    Value_Mua read_mua()
+    Value_Mua read_mua(List<String> nodes)
     {
-        String str = "";
+        String str = nodes.get(0);
+        nodes.remove(0);
         Value_Mua v;
-        if (scan.hasNextLine())
-        {
-            str = scan.nextLine();
-        }
-        String judge = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
-        if(str.matches(judge))
+        if(str.matches(regex_num))
         {
             v = new Value_Mua(str);
             v.Type_Mua= Value_Mua.TYPE_MUA.NUMBER;
