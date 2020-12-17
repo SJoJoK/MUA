@@ -4,7 +4,6 @@ import java.util.*;
 
 public class Interpreter_Mua {
     String regex_num = "(^[0-9]+(.[0-9]+)?$)|(-?[0-9]+(.[0-9]+)?$)";
-    //String regex_ops = "\\+|-|\\*|/|%|\\(|\\)";
     String regex_ops = "[+\\-*/%()]";
     HashMap<String,Value_Mua> Variable_Map_Global;
     HashMap<String,HashMap<String, Value_Mua>> Env;
@@ -115,8 +114,7 @@ public class Interpreter_Mua {
                     nodes.set(0, "\""+nodes.get(0));
                     Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
-                    Value_Mua res = thing_mua(name,env_name);
-                    return res;
+                    return thing_mua(name,env_name);
                 }
                 case "thing":
                 {
@@ -703,7 +701,7 @@ public class Interpreter_Mua {
             argu_value.add(new Value_Mua());
             argu_value.set(i, interpret(father_nodes, new ArrayList<>(), 0, father_env_name));
         }
-        //Bonding
+        //绑定
         for(int i=0;i<argc;i++)
         {
             this_env.put(func_argu_name.list_value.get(i),argu_value.get(i));
