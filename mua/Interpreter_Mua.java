@@ -112,6 +112,7 @@ public class Interpreter_Mua {
                 case ":":
                 {
                     nodes.remove(0);
+                    nodes.set(0, "\""+nodes.get(0));
                     Value_Mua value =interpret(nodes, ress, k+1, env_name);
                     Word_Mua name = value.toWord();
                     Value_Mua res = thing_mua(name,env_name);

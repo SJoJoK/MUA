@@ -35,8 +35,8 @@ make "a 1
 make "repeat [
     [n s]
     [
-		if eq :n 0 
-			[] 
+		if eq :n 0
+			[]
 			[run :s repeat sub :n 1 :s]
 	]
 ]
@@ -61,5 +61,32 @@ make "gcd [
             [return gcd :b (:a % :b)]
     ]
 ]
+make "f [
+  [n]
+  [
+    if eq :n 5
+      []
+      [print :n f add :n 1]
+  ]
+]
+f 1
 print gcd 18 14
 print gcd 18 13
+make "sum [
+    [term a next b]
+    [
+        if gt :a :b
+            [return 0]
+            [return add term :a sum :term next :a :next :b]
+    ]
+]
+make "sum_term [
+    [x]
+    [return :x]
+]
+make "sum_next [
+    [x]
+    [return add :x 1]
+]
+print sum :sum_term 1 :sum_next 10
+print sum [[x] [return add :x :x]] 1 [[x] [return add :x 1]] 10
