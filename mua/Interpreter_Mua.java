@@ -33,21 +33,20 @@ public class Interpreter_Mua
             }
         }
     }
-    void mua_init()
-    {
+
+    void mua_init() {
         Variable_Map_Global = new HashMap<>();
         Variable_Map_Global.put("pi",new Number_Mua(3.14159));
         Env = new HashMap<>();
         Env.put("global", Variable_Map_Global);
     }
+
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name) {
-        if (nodes.isEmpty())
-        {
+        if (nodes.isEmpty()) {
             if(scan.hasNextLine())
                 get_next_line(nodes);
             else return new Value_Mua();
         }
-
         //number
         if (nodes.get(0).equals("")) {
             nodes.remove(0);
@@ -129,7 +128,7 @@ public class Interpreter_Mua
                 case "read": {
                     ress.add(new Value_Mua());
                     nodes.remove(0);
-                    Value_Mua res = read_mua(nodes);
+                    Value_Mua res = read_mua();
                     ress.set(k, res);
                     return res;
                 }
@@ -458,6 +457,13 @@ public class Interpreter_Mua
                     ress.set(k, res);
                     return res;
                 }
+                case "readlist":{
+                    ress.add(new Value_Mua());
+                    nodes.remove(0);
+                    List_Mua res = readlist_mua();
+                    ress.set(k, res);
+                    return res;
+                }
                 default: {
                     String temp = nodes.get(0);
                     nodes.remove(0);
@@ -568,8 +574,7 @@ public class Interpreter_Mua
         return new List_Mua(literal);
     }
 
-    void get_next_line(List<String>nodes)
-    {
+    void get_next_line(List<String>nodes) {
         String inst = new String();
         if(scan.hasNextLine())
         {
@@ -688,7 +693,7 @@ public class Interpreter_Mua
         return value;
     }
 
-    Value_Mua read_mua(List<String> nodes) {
+    Value_Mua read_mua() {
         String str = "";
         Value_Mua v;
         if (scan.hasNextLine())
@@ -981,14 +986,12 @@ public class Interpreter_Mua
 
     }
 
-    Bool_Mua erall_mua(String env_name)
-    {
+    Bool_Mua erall_mua(String env_name) {
         Env.get(env_name).clear();
         return new Bool_Mua(true);
     }
 
-    List_Mua poall_mua(String env_name)
-    {
+    List_Mua poall_mua(String env_name) {
         ArrayList<Value_Mua> vs = new ArrayList<>();
         HashMap<String, Value_Mua> namespace_mua = Env.get(env_name);
         Iterator<Map.Entry<String, Value_Mua>> iter = namespace_mua.entrySet().iterator();
@@ -1001,21 +1004,34 @@ public class Interpreter_Mua
         return res;
     }
 
-    Number_Mua random_mua(Number_Mua num)
-    {
+    Number_Mua random_mua(Number_Mua num) {
         double rnd = new Random().nextDouble();
         return new Number_Mua(num.number_value*rnd);
     }
 
-    Number_Mua int_mua(Number_Mua num)
-    {
+    Number_Mua int_mua(Number_Mua num) {
         int x = (int) Math.floor(num.number_value);
         return new Number_Mua(x);
     }
 
-    Number_Mua sqrt_mua(Number_Mua num)
-    {
+    Number_Mua sqrt_mua(Number_Mua num) {
         double x = Math.sqrt(num.number_value);
         return new Number_Mua(x);
+    }
+
+    List_Mua readlist_mua() {
+        ArrayList<String> nodes_list = new ArrayList<>();
+        ArrayList<Value_Mua> vs = new ArrayList<>();
+        String str = "";
+        Value_Mua v;
+        if (scan.hasNextLine()) {
+            str = scan.nextLine();
+            String[] nodes = str.trim().split("\\s+");
+            nodes_list = new ArrayList<>(Arrays.asList(nodes));
+        }
+        for (int i=0;i<nodes_list.size();i++) {
+            vs.add(new Word_Mua("\""+nodes_list.get(i)));
+        }
+        return new List_Mua(vs);
     }
 }
