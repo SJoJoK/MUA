@@ -13,22 +13,22 @@ public class Interpreter_Mua
     public void begin() {
         mua_init();
         scan = new Scanner(System.in);
-        StringBuilder program = new StringBuilder();
-        while (scan.hasNextLine()) {
-            program.append(" ");
-            program.append(scan.nextLine());
-        }
-        String[] nodes = program.toString().replace("(", " ( ").replace(")", " ) ")
-                .replace("[", " [ ").replace("]", " ] ")
-                .replace("+", " + ").replace("-", " - ")
-                .replace("*", " * ").replace("/", " / ")
-                .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
-        ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
-        ArrayList<Value_Mua> ress = new ArrayList<>();
-        while (!nodes_list.isEmpty()) {
-            try {
+        String inst = new String();
+        while(scan.hasNextLine())
+        {
+            inst = scan.nextLine();
+            String[] nodes = inst.replace("(", " ( ").replace(")", " ) ")
+                    .replace("[", " [ ").replace("]", " ] ")
+                    .replace("+", " + ").replace("-", " - ")
+                    .replace("*", " * ").replace("/", " / ")
+                    .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
+            ArrayList<String> nodes_list = new ArrayList<>(Arrays.asList(nodes));
+            ArrayList<Value_Mua> ress = new ArrayList<>();
+            try
+            {
                 interpret(nodes_list, ress, 0, "global");
-            } catch (Throwable e) {
+            } catch (Throwable e)
+            {
                 break;
             }
         }
@@ -41,7 +41,13 @@ public class Interpreter_Mua
         Env.put("global", Variable_Map_Global);
     }
     Value_Mua interpret(List<String> nodes, List<Value_Mua> ress, int k, String env_name) {
-        if (nodes.isEmpty()) return new Value_Mua();
+        if (nodes.isEmpty())
+        {
+            if(scan.hasNextLine())
+                get_next_line(nodes);
+            else return new Value_Mua();
+        }
+
         //number
         if (nodes.get(0).equals("")) {
             nodes.remove(0);
@@ -491,7 +497,47 @@ public class Interpreter_Mua
         }
     }
 
-    static Value_Mua build_list(List<String> nodes) {
+    Value_Mua build_list(List<String> nodes) {
+        StringBuilder literal = new StringBuilder();
+        int lb = 0;
+        while(true)
+        {
+            String str = nodes.get(0);
+            if("[".equals(str))
+            {
+                lb++;
+                literal.append("[");
+                nodes.remove(0);
+            }
+            else if("]".equals(str))
+            {
+                lb--;
+                if(literal.length()>0)
+                    if (literal.charAt(literal.length() - 1) == ' ')
+                        literal.deleteCharAt(literal.length() - 1);//移除空格
+                if(lb==0)
+                {
+                    literal.append("]");
+                    nodes.remove(0);
+                    break;
+                }
+                else
+                {
+                    literal.append("]").append(" ");
+                    nodes.remove(0);
+                }
+            }
+            else
+            {
+                literal.append(str).append(" ");
+                nodes.remove(0);
+            }
+            if(nodes.isEmpty()) get_next_line(nodes);
+        }
+        return new List_Mua(literal);
+    }
+
+    static Value_Mua build_list_static (List<String> nodes) {
         StringBuilder literal = new StringBuilder();
         Iterator<String> iter = nodes.iterator();
         int lb = 0;
@@ -520,6 +566,23 @@ public class Interpreter_Mua
             }
         }
         return new List_Mua(literal);
+    }
+
+    void get_next_line(List<String>nodes)
+    {
+        String inst = new String();
+        if(scan.hasNextLine())
+        {
+            inst = scan.nextLine();
+            //if(inst.equals("")) break;
+            // 改成循环
+            String[] takens = inst.replace("("," ( ").replace(")"," ) ")
+                    .replace("["," [ ").replace("]"," ] ")
+                    .replace("+", " + ").replace("-", " - ")
+                    .replace("*", " * ").replace("/", " / ")
+                    .replace("%", " % ").replace(":", " : ").trim().split("\\s+");
+            nodes.addAll(new ArrayList<String>(Arrays.asList(takens)));//读取下一行
+        }
     }
 
     Number_Mua infix(List<String> nodes, String env_name) {
@@ -626,15 +689,16 @@ public class Interpreter_Mua
     }
 
     Value_Mua read_mua(List<String> nodes) {
-        String str = nodes.get(0);
-        nodes.remove(0);
+        String str = "";
         Value_Mua v;
+        if (scan.hasNextLine())
+        {
+            str = scan.nextLine();
+        }
         if (str.matches(regex_num)) {
-            v = new Value_Mua(str);
-            v.Type_Mua = Value_Mua.TYPE_MUA.NUMBER;
+            v = new Number_Mua(str);
         } else {
-            v = new Value_Mua('\"' + str);
-            v.Type_Mua = Value_Mua.TYPE_MUA.WORD;
+            v = new Word_Mua('\"' + str);
         }
         return v;
     }

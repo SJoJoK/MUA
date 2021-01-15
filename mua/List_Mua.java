@@ -95,7 +95,7 @@ public class List_Mua extends Value_Mua {
             //list
             else if(list_mua_value_tmp.get(0).charAt(0)=='[')
             {
-                list_mua_value.add(Interpreter_Mua.build_list(list_mua_value_tmp));
+                list_mua_value.add(Interpreter_Mua.build_list_static(list_mua_value_tmp));
             }
             //word without "
             else
@@ -155,7 +155,7 @@ public class List_Mua extends Value_Mua {
             //list
             else if(list_mua_value_tmp.get(0).charAt(0)=='[')
             {
-                list_mua_value.add(Interpreter_Mua.build_list(list_mua_value_tmp));
+                list_mua_value.add(Interpreter_Mua.build_list_static(list_mua_value_tmp));
             }
             //word without "
             else
