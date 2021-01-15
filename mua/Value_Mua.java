@@ -59,6 +59,8 @@ public class Value_Mua {
     public Bool_Mua isbool()
     {
         if(Type_Mua==TYPE_MUA.BOOL) return new Bool_Mua(true);
+        if(Type_Mua==TYPE_MUA.WORD && (this.literal.substring(1).equals("true")) || (this.literal.substring(1).equals("fasle")))
+            return new Bool_Mua(true);
         return new Bool_Mua(false);
     }
     public Bool_Mua isempty()

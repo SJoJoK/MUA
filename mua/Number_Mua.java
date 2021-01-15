@@ -22,4 +22,11 @@ public class Number_Mua extends Value_Mua {
         number_value = d;
 
     }
+    Number_Mua(int i)
+    {
+        super("" + i);
+        Type_Mua=TYPE_MUA.NUMBER;
+        number_value = i;
+
+    }
 }
